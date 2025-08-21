@@ -1,187 +1,138 @@
-# 人类线粒体DNA多序列分析与系统发育树构建
+# 人类线粒体基因组系统发育与群体遗传分析
 
-本项目提供了一套完整的流程，用于处理从NCBI下载的人类线粒体DNA FASTA文件，进行多序列分析并构建系统发育树。该流程包括数据清洗、异常序列检测、多序列比对和进化树可视化等关键步骤。
+##  项目概述
 
-![Workflow](https://via.placeholder.com/800x400.png?text=Analysis+Workflow)
-*示例工作流程图 - 实际使用请替换为真实图表*
+本项目是一个完整的生物信息学分析流程，旨在通过对从NCBI下载的人类线粒体DNA全基因组数据进行多序列比对和系统发育重建，深入探究人类群体的母系遗传进化关系、种群结构以及线粒体基因组的变异模式。
 
-## 目录结构
+**核心工作流:** `数据获取 (NCBI)` → `数据清洗` → `多序列比对 (MAFFT)` → `系统发育建树 (IQ-TREE)` → `可视化与解读`
+
+##  研究目的
+
+1.  **构建高分辨率系统发育树:** 利用最大似然法构建可靠的人类线粒体DNA系统发育树，揭示不同单倍群之间的进化关系。
+2.  **评估节点可靠性:** 使用超快速Bootstrap (UFBoot) 和 SH-aLRT 检验量化系统发育树中关键分支的统计支持率。
+3.  **探究群体遗传结构:** 基于系统发育拓扑结构，分析不同地理人群的遗传分化和历史动态。
+
+##  数据来源
+
+-   **数据库:** [NCBI Nucleotide](https://www.ncbi.nlm.nih.gov/nucleotide/)
+-   **格式:** GenBank (full format)
+-   **检索词:** `"Human mitochondrion"[Organism] AND complete genome AND "mtDNA"`
+-   **序列数量:** >60,000 条
+
+
+##  所需工具与环境
+
+本项目依赖于以下开源软件和库。建议使用Conda进行环境管理。
+
+### 核心工具
+| 工具 | 版本 | 用途 |
+| :--- | :--- | :--- |
+| **Python** | ≥ 3.8 | 主编程语言，运行数据清洗脚本 |
+| **Biopython** | ≥ 1.80 | 处理序列数据（GenBank, FASTA） |
+| **MAFFT** | ≥ 7.5 | 高性能多序列比对 |
+| **IQ-TREE** | ≥ 2.2 | 模型选择与最大似然法系统发育分析 |
+| **TrimAl** | ≥ 1.4 | 修剪多序列比对结果 |
+
+### 可视化工具
+| 工具 | 类型 | 用途 |
+| :--- | :--- | :--- |
+| **FigTree** | 桌面软件 | 交互式查看和美化系统发育树 |
+| **iTOL** | 在线平台 | 创建高级、可发表的树形图 |
+
+### 推荐环境配置
+```bash
+# 1. 创建并激活Conda环境
+conda create -n mtdna-analysis python=3.8
+conda activate mtdna-analysis
+
+# 2. 通过Bioconda安装所有依赖
+conda install -c bioconda biopython mafft iqtree trimal
 ```
-mitochondrial-dna-phylogeny/
+
+##  项目结构
+
+```
+mitogenome-phylogeny/
 ├── data/
-│   ├── raw/                  # 原始FASTA文件
-│   └── processed/            # 处理后的数据
+│   ├── raw/                   # 原始数据
+│   │   └── ncbi_search_results.gb
+│   ├── processed/             # 处理后的数据
+│   │   ├── cleaned_sequences.fasta
+│   │   └── reference.fasta
+│   └── alignment/             # 比对结果
+│       ├── aligned_sequences.fasta
+│       └── trimmed_alignment.phy
 ├── results/
-│   ├── alignments/           # 多序列比对结果
-│   ├── trees/                # 系统发育树文件
-│   └── figures/              # 可视化结果
+│   ├── trees/                 # 树文件
+│   │   ├── mtdna.treefile
+│   │   └── mtdna.contree
+│   ├── reports/               # 分析报告
+│   │   └── mtdna.iqtree
+│   └── figures/               # 可视化结果
+│       └── phylogenetic_tree.svg
 ├── scripts/
-│   ├── 01_data_cleaning.py
-│   ├── 02_sequence_analysis.py
-│   ├── 03_alignment.py
-│   ├── 04_phylogeny.py
-│   └── 05_visualization.py
-├── env.yml                   # Conda环境配置
+│   ├── 01_fetch_and_clean.py  # 数据获取与清洗
+│   ├── 02_align_sequences.py  # 多序列比对
+│   └── 03_run_iqtree.py       # 系统发育分析
 └── README.md
 ```
 
-## 工作流程
+##  分析流程
 
-1. **数据清洗与预处理**
-2. **序列分析与异常检测**
-3. **多序列比对**
-4. **系统发育树构建**
-5. **结果可视化**
-
-## 快速开始
-
-### 前置要求
-- Python 3.8+
-- Conda (推荐用于环境管理)
-- 以下软件通过Conda安装：
-  - Biopython
-  - MAFFT (多序列比对)
-  - IQ-TREE (建树)
-  - TrimAl (比对修剪)
-  - Plotly/Dash (可视化)
-
-### 安装
-
+### 步骤 1: 数据获取与清洗
 ```bash
-# 克隆仓库
-git clone https://github.com/yourusername/mitochondrial-dna-phylogeny.git
-cd mitochondrial-dna-phylogeny
-
-# 创建Conda环境
-conda env create -f env.yml
-conda activate mtdna-analysis
-```
-
-### 运行完整流程
-
-```bash
-# 步骤1: 数据清洗
-python scripts/01_data_cleaning.py -i data/raw/mtDNA_samples.fasta -o data/processed/cleaned.fasta
-
-# 步骤2: 序列分析与异常检测
-python scripts/02_sequence_analysis.py -i data/processed/cleaned.fasta -r data/reference/mtDNA_human_ref.fasta
-
-# 步骤3: 多序列比对
-python scripts/03_alignment.py -i data/processed/cleaned.fasta -o results/alignments/
-
-# 步骤4: 建树
-python scripts/04_phylogeny.py -i results/alignments/aligned.fasta -o results/trees/
-
-# 步骤5: 可视化
-python scripts/05_visualization.py -t results/trees/mtDNA_tree.nwk -o results/figures/
-```
-
-## 详细步骤说明
-
-### 1. 数据清洗 (`01_data_cleaning.py`)
-- 移除过短序列 (<16,000 bp)
-- 过滤低质量序列 (含N比例 >5%)
-- 标准化序列标识符
-- 检查并修复序列方向（与参考序列比对）
-
-**关键参数：**
-```bash
-python 01_data_cleaning.py \
-  --input data/raw/input.fasta \
-  --output data/processed/cleaned.fasta \
+# 运行数据清洗脚本 (示例)
+python scripts/01_fetch_and_clean.py \
+  --input data/raw/ncbi_search_results.gb \
+  --output data/processed/cleaned_sequences.fasta \
   --min_length 16000 \
   --max_n 0.05
 ```
+**功能:** 提取GenBank文件中的序列、过滤低质量序列、标准化序列标识符、进行方向校正。
 
-### 2. 序列分析与异常检测 (`02_sequence_analysis.py`)
-- GC含量分析
-- 密码子使用偏倚检测
-- 非同义/同义突变比率计算
-- 使用PCA和聚类识别异常序列
-
-**输出：**
-- `sequence_statistics.csv` - 各样本统计指标
-- `pca_plot.html` - PCA可视化
-- `sequence_heatmap.html` - 序列相似性热图
-
-### 3. 多序列比对 (`03_alignment.py`)
-使用MAFFT进行比对：
-```python
-from Bio.Align.Applications import MafftCommandline
-mafft_cline = MafftCommandline(input="input.fasta")
-stdout, stderr = mafft_cline()
-```
-
-比对后修剪：
+### 步骤 2: 多序列比对
 ```bash
-trimal -in aligned.fasta -out trimmed.fasta -gt 0.9 -cons 60
+# 使用MAFFT进行比对
+mafft --auto --thread 8 data/processed/cleaned_sequences.fasta > data/alignment/aligned_sequences.fasta
+
+# 使用TrimAl修剪比对结果
+trimal -in data/alignment/aligned_sequences.fasta -out data/alignment/trimmed_alignment.phy -gt 0.9 -cons 60
 ```
 
-### 4. 系统发育树构建 (`04_phylogeny.py`)
-使用IQ-TREE构建最大似然树：
+### 步骤 3: 系统发育分析
 ```bash
-iqtree -s trimmed.fasta -m MFP -bb 1000 -nt AUTO
+# 使用IQ-TREE进行完整的模型选择、建树和分支支持率评估
+iqtree -s data/alignment/trimmed_alignment.phy \
+  -m MFP \           # 自动进行ModelFinder模型选择
+  -B 1000 -bnni \    # 1000次UFBoostrap计算
+  -alrt 1000 \       # 1000次SH-aLRT检验
+  -T AUTO \          # 自动选择最佳线程数
+  --prefix results/trees/mtdna # 输出文件前缀
 ```
 
-参数说明：
-- `-m MFP`: 自动选择最佳替代模型
-- `-bb 1000`: 1000次bootstrap重采样
-- `-nt AUTO`: 自动使用多线程
+### 步骤 4: 结果可视化
+1.  将生成的 `results/trees/mtdna.contree` 文件导入 **FigTree**。
+2.  调整样式：显示节点支持率、调整分支颜色、缩放分支长度。
+3.  导出高质量图片（PDF/SVG/PNG）用于发表。
+4.  （可选）将树文件上传至 [iTOL](https://itol.embl.de) 进行更高级的在线注释。
 
-### 5. 可视化 (`05_visualization.py`)
-使用Plotly生成交互式进化树：
-```python
-import plotly.graph_objects as go
-from Bio.Phylo import read
+##  预期结果与解读
 
-tree = read("tree.nwk", "newick")
-fig = go.Figure(go.Treemap(
-    ids = ids,
-    labels = labels,
-    parents = parents))
-fig.show()
-```
+-   **`mtdna.iqtree`**: 文本报告，包含：
+    -   最佳拟合模型（如 `TIM3+F+I+G4`）及其参数。
+    -   模型选择标准（BIC/AIC/AICc值）。
+    -   建树日志似然值（Log-likelihood）。
+-   **`mtdna.contree`**: 包含分支支持率（UFBoot/SH-aLRT）的共识树文件。
+    -   **支持率解读:** `UFBoot ≥ 95%` 和 `SH-aLRT ≥ 80%` 通常认为分支具有强支持。
+-   **系统发育树:** 可视化的树形图，用于阐释各单倍群（Haplogroup）间的进化关系。
 
-## 示例结果
 
-1. **多序列比对可视化**
-   ![Alignment](https://via.placeholder.com/600x300.png?text=Multiple+Sequence+Alignment)
+##  参考文献
 
-2. **系统发育树**
-   ![Phylogenetic Tree](https://via.placeholder.com/600x400.png?text=Phylogenetic+Tree+with+Bootstrap+Values)
+*   Nguyen, L.-T., et al. (2015). IQ-TREE: A fast and effective stochastic algorithm for estimating maximum-likelihood phylogenies. *Mol. Biol. Evol.*, 32(1), 268-274.
+*   Katoh, K., & Standley, D. M. (2013). MAFFT multiple sequence alignment software version 7: improvements in performance and usability. *Mol. Biol. Evol.*, 30(4), 772-780.
+*   Cock, P. J. A., et al. (2009). Biopython: freely available Python tools for computational molecular biology and bioinformatics. *Bioinformatics*, 25(11), 1422-1423.
 
-3. **群体结构分析**
-   ![Population Structure](https://via.placeholder.com/600x300.png?text=PCA+and+Population+Structure)
+---
 
-## 常见问题解决
-
-**Q: 序列比对时间过长怎么办？**
-A: 尝试：
-1. 使用MAFFT的`--auto`参数选择最快策略
-2. 减少样本数量（特别是高度相似的序列）
-3. 使用`--thread`参数增加线程数
-
-**Q: Bootstrap值普遍偏低？**
-A: 可能原因：
-- 序列分化程度低
-- 模型选择不当
-- 信息位点不足
-解决方案：
-1. 增加bootstrap重复次数（`-bb 5000`）
-2. 尝试不同替代模型
-3. 检查比对质量，可能需要重新修剪
-
-**Q: 如何解释树中的异常分支？**
-A: 建议检查：
-1. 原始序列质量（步骤2的输出）
-2. 是否混杂了非人源序列
-3. 线粒体异质性现象
-4. 可能的测序错误或组装错误
-
-## 引用工具
-- MAFFT: [Katoh & Standley (2013)](https://mafft.cbrc.jp/alignment/software/)
-- IQ-TREE: [Nguyen et al. (2015)](https://doi.org/10.1093/molbev/msu300)
-- Biopython: [Cock et al. (2009)](https://doi.org/10.1093/bioinformatics/btp163)
-
-## 许可证
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+**⭐ 如果这个项目对您有帮助，请给它点个星！**
