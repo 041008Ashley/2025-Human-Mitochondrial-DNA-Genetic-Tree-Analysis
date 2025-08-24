@@ -1,140 +1,133 @@
-# 人类线粒体基因组系统发育与群体遗传分析
+# 人类线粒体基因组系统发育分析 / Human Mitochondrial Genome Phylogenetic Analysis
 
-##  项目概述
+## 项目描述 / Project Description
 
-本项目是一个完整的生物信息学分析流程，旨在通过对从NCBI下载的人类线粒体DNA全基因组数据进行多序列比对和系统发育重建，深入探究人类群体的母系遗传进化关系、种群结构以及线粒体基因组的变异模式。
+本项目旨在利用公共数据库（NCBI）中当前所有可获取的人类线粒体DNA（mtDNA）完整基因组序列（共64,028条），构建一个高分辨率的人类线粒体系统发育树。通过这一分析，我们可以从宏观上追溯人类母系遗传谱系的进化历史、观察不同人群的遗传多样性，并为后续的群体遗传学研究提供参考。
 
-**核心工作流:** `数据获取 (NCBI)` → `数据清洗` → `多序列比对 (MAFFT)` → `系统发育建树 (IQ-TREE)` → `可视化与解读`
+This project aims to construct a high-resolution phylogenetic tree of human mitochondrial DNA (mtDNA) using all currently available complete mitochondrial genome sequences (64,028 in total) from public databases (NCBI). This analysis will allow us to trace the evolutionary history of human maternal lineages on a macro scale, observe the genetic diversity among different populations, and provide a reference for subsequent population genetics studies.
 
-##  研究目的
+## 项目步骤概览 / Project Steps Overview
 
-1.  **构建高分辨率系统发育树:** 利用最大似然法构建可靠的人类线粒体DNA系统发育树，揭示不同单倍群之间的进化关系。
-2.  **评估节点可靠性:** 使用超快速Bootstrap (UFBoot) 和 SH-aLRT 检验量化系统发育树中关键分支的统计支持率。
-3.  **探究群体遗传结构:** 基于系统发育拓扑结构，分析不同地理人群的遗传分化和历史动态。
+1.  **数据获取 / Data Acquisition**: 从NCBI数据库批量下载全部人类线粒体完整基因组序列。
+    Bulk download all complete human mitochondrial genome sequences from the NCBI database.
+2.  **多序列比对 / Multiple Sequence Alignment**: 使用MAFFT软件对所有序列进行精准的多序列比对，确保同源位点对齐。
+    Use MAFFT software to perform accurate multiple sequence alignment of all sequences, ensuring homologous sites are aligned.
+3.  **模型选择与建树 / Model Selection and Tree Building**: 使用IQ-TREE软件进行 / Use IQ-TREE software to:
+    *   **模型比较 / Model Comparison**: 自动测试多种核苷酸替代模型，并选择最适合当前数据的模型。
+        Automatically test multiple nucleotide substitution models and select the best-fit model for the current data.
+    *   **系统树构建 / Phylogenetic Tree Construction**: 基于所选的最佳模型，构建最大似然系统发育树。
+        Construct a Maximum Likelihood phylogenetic tree based on the selected best model.
+4.  **结果解释 / Result Interpretation**: 对生成的系统树进行生物学解释，可视化展示（例如，从完整数据中抽取一个30条序列的子集生成示意图）。
+    Biologically interpret the generated phylogenetic tree and create visualizations (e.g., generate a schematic diagram from a subset of 30 sequences extracted from the full dataset).
 
-##  数据来源
+## 文件说明 / File Description
 
--   **数据库:** [NCBI Nucleotide](https://www.ncbi.nlm.nih.gov/nucleotide/)
--   **格式:** GenBank (full format)
--   **检索词:** `"Human mitochondrion"[Organism] AND complete genome AND "mtDNA"`
--   **序列数量:** >60,000 条
+- `all.aln.uniqueseq.aln`: 经过MAFFT比对后产生的序列比对文件（FASTA或Phylip格式）。
+  The sequence alignment file (FASTA or Phylip format) produced by MAFFT alignment.
+- `all.aln.uniqueseq.aln.ckp`: IQ-TREE的检查点文件，用于恢复意外中断的分析。
+  IQ-TREE checkpoint file used to resume an accidentally interrupted analysis.
+- `all.aln.uniqueseq.aln.iqtree`: IQ-TREE的主要结果报告文件，包含详细的分析摘要、模型选择结果、树信心评估等。
+  IQ-TREE's main report file, containing a detailed analysis summary, model selection results, tree confidence assessments, etc.
+- `all.aln.uniqueseq.aln.treefile`: 以NEWICK格式存储的最终最大似然树。
+  The final Maximum Likelihood tree stored in NEWICK format.
+- `all.aln.uniqueseq.aln.contree`: 共识树文件（如果使用了`-b`或`-B`选项进行自举法分析）。
+  Consensus tree file (if the `-b` or `-B` option was used for bootstrap analysis).
+- `all.aln.uniqueseq.aln.bionj`: BIONJ树文件，通常用作最大似然分析的起始树。
+  BIONJ tree file, often used as the starting tree for the Maximum Likelihood analysis.
+- `all.aln.uniqueseq.aln.mldist`: 最大似然距离矩阵。
+  Maximum Likelihood distance matrix.
+- `all.aln.uniqueseq.aln.model`: 模型文件，包含所选模型的参数。
+  Model file containing the parameters of the selected model.
+- `all.aln.uniqueseq.aln.splits.nex`: 以Nexus格式存储的支持率网络（splits），可用于其他软件（如SplitsTree）可视化。
+  Support network (splits) stored in Nexus format, which can be used for visualization in other software (e.g., SplitsTree).
 
+## 核心知识背景 / Core Knowledge Background
 
-##  所需工具与环境
+### 1. 生物学背景 / Biological Background
 
-本项目依赖于以下开源软件和库。建议使用Conda进行环境管理。
+- **人类线粒体DNA / Human Mitochondrial DNA**: 是母系遗传的环状DNA分子，约16.6 kb。其进化速率比核DNA快10-20倍，且缺乏重组，使其成为研究近期进化历史和群体遗传学的强大工具。
+  A maternally inherited circular DNA molecule, approximately 16.6 kb. Its evolutionary rate is 10-20 times faster than nuclear DNA, and it lacks recombination, making it a powerful tool for studying recent evolutionary history and population genetics.
+- **系统发育学 / Phylogenetics**: 通过比较物种或其他分类单元的遗传特征（如DNA序列）来推断它们之间的进化关系。目标是构建一个代表这些序列进化历史的“树”（系统发育树），其中分支点代表共同的祖先。
+  The inference of evolutionary relationships among species or other taxa by comparing genetic characteristics (e.g., DNA sequences). The goal is to construct a "tree" (phylogenetic tree) representing the evolutionary history of these sequences, where branch points represent common ancestors.
+- **单倍群 / Haplogroups**: 共享一个共同祖先的mtDNA谱系，通常由特定的突变组合定义。全球人类mtDNA可分为多个主要单倍群（如L, M, N, H等），它们记录了人类走出非洲和迁徙的历史。
+  mtDNA lineages that share a common ancestor, usually defined by a specific set of mutations. Global human mtDNA can be divided into several major haplogroups (e.g., L, M, N, H), which record the history of human migration out of Africa.
 
-### 核心工具
-| 工具 | 版本 | 用途 |
-| :--- | :--- | :--- |
-| **Python** | ≥ 3.8 | 主编程语言，运行数据清洗脚本 |
-| **Biopython** | ≥ 1.80 | 处理序列数据（GenBank, FASTA） |
-| **MAFFT** | ≥ 7.5 | 高性能多序列比对 |
-| **IQ-TREE** | ≥ 2.2 | 模型选择与最大似然法系统发育分析 |
-| **TrimAl** | ≥ 1.4 | 修剪多序列比对结果 |
+### 2. 数学与统计学背景 / Mathematical and Statistical Background
 
-### 可视化工具
-| 工具 | 类型 | 用途 |
-| :--- | :--- | :--- |
-| **FigTree** | 桌面软件 | 交互式查看和美化系统发育树 |
-| **iTOL** | 在线平台 | 创建高级、可发表的树形图 |
+- **最大似然法 / Maximum Likelihood (ML)**: 本项目建树的核心方法。它寻找一棵能“以最高概率”产生我们所观察到的序列数据的系统树和进化模型。计算公式涉及在所有可能的树上对位点概率求和，这是一个NP难问题，因此需要启发式算法。
+  The core method for tree building in this project. It finds the phylogenetic tree and evolutionary model that would have most likely produced the observed sequence data. The calculation involves summing site probabilities over all possible trees, an NP-hard problem, hence requiring heuristic algorithms.
+- **模型选择 / Model Selection**: 使用**贝叶斯信息准则（BIC）** 或**Akaike信息准则（AIC）** 等统计标准来比较不同模型的拟合优度，同时惩罚模型的复杂性（参数数量），以防止过拟合。BIC更倾向于选择更简单的模型。
+  Uses statistical criteria like the **Bayesian Information Criterion (BIC)** or **Akaike Information Criterion (AIC)** to compare the goodness-of-fit of different models while penalizing model complexity (number of parameters) to prevent overfitting. BIC tends to prefer simpler models.
+- **自举法 / Bootstrapping**: 一种重采样技术，用于评估系统树分支的可信度。通过对比对数据随机重采样（有放回）生成数百个甚至数千个重复数据集，并重建每个数据集的树。一个分支的自举支持率越高，代表该分支在数据中越可靠。
+  A resampling technique used to assess the confidence of phylogenetic tree branches. Hundreds or thousands of replicate datasets are generated by randomly resampling (with replacement) the alignment data, and a tree is rebuilt for each. A higher bootstrap support value for a branch indicates greater reliability.
 
-### 推荐环境配置
-```bash
-# 1. 创建并激活Conda环境
-conda create -n mtdna-analysis python=3.8
-conda activate mtdna-analysis
+### 3. 计算机科学背景 / Computer Science Background
 
-# 2. 通过Bioconda安装所有依赖
-conda install -c bioconda biopython mafft iqtree trimal
-```
+- **算法复杂性 / Algorithmic Complexity**: 系统发育重建是一个计算密集型任务。对于64k条序列，彻底搜索所有可能的树形在计算上是不可行的（树的数量是超指数增长的）。IQ-TREE使用了高效的启发式算法（如星形分解）和随机搜索来寻找似然率最高的树。
+  Phylogenetic reconstruction is a computationally intensive task. For 64k sequences, an exhaustive search of all possible tree topologies is computationally infeasible (the number of trees grows super-exponentially). IQ-TREE uses efficient heuristic algorithms (e.g., star decomposition) and stochastic search to find the tree with the highest likelihood.
+- **并行计算 / Parallel Computing**: 为了处理如此大规模的数据，IQ-TREE可以利用多核CPU进行并行计算，显著缩短分析时间（例如，使用`-T AUTO`选项）。
+  To handle such large datasets, IQ-TREE can utilize multi-core CPUs for parallel computing, significantly reducing analysis time (e.g., using the `-T AUTO` option).
+- **数据压缩 / Data Compression**: 由于序列数量巨大，IQ-TREE会自动识别并压缩完全相同的序列，仅使用唯一序列进行建树，以节省内存和计算时间。这解释了文件名中的`uniqueseq`。
+  Due to the large number of sequences, IQ-TREE automatically identifies and compresses identical sequences, using only unique sequences for tree building to save memory and computation time. This explains the `uniqueseq` in the filenames.
 
-##  项目结构
+## 碱基替代模型比较与选择 / Nucleotide Substitution Model Comparison and Selection
 
-```
-mitogenome-phylogeny/
-├── data/
-│   ├── raw/                   # 原始数据
-│   │   └── ncbi_search_results.gb
-│   ├── processed/             # 处理后的数据
-│   │   ├── cleaned_sequences.fasta
-│   │   └── reference.fasta
-│   └── alignment/             # 比对结果
-│       ├── aligned_sequences.fasta
-│       └── trimmed_alignment.phy
-├── results/
-│   ├── trees/                 # 树文件
-│   │   ├── mtdna.treefile
-│   │   └── mtdna.contree
-│   ├── reports/               # 分析报告
-│   │   └── mtdna.iqtree
-│   └── figures/               # 可视化结果
-│       └── phylogenetic_tree.svg
-├── scripts/
-│   ├── 01_fetch_and_clean.py  # 数据获取与清洗
-│   ├── 02_align_sequences.py  # 多序列比对
-│   └── 03_run_iqtree.py       # 系统发育分析
-└── README.md
-```
+IQ-TREE的模型比较功能（如`ModelFinder`）是项目成功的关键一步。不同的模型对序列进化的假设不同，会直接影响树的拓扑结构和分支长度。
+IQ-TREE's model comparison function (e.g., `ModelFinder`) is a critical step for the project's success. Different models make different assumptions about sequence evolution, which directly affects the tree topology and branch lengths.
 
-##  分析流程
+### 常见模型及其差异 / Common Models and Their Differences:
 
-### 步骤 1: 数据获取与清洗
-```bash
-# 运行数据清洗脚本 (示例)
-python scripts/01_fetch_and_clean.py \
-  --input data/raw/ncbi_search_results.gb \
-  --output data/processed/cleaned_sequences.fasta \
-  --min_length 16000 \
-  --max_n 0.05
-```
-**功能:** 提取GenBank文件中的序列、过滤低质量序列、标准化序列标识符、进行方向校正。
+| 模型名称<br>Model Name | 全称<br>Full Name | 可变参数<br>Parameters | 特点与假设<br>Characteristics & Assumptions | 对结果的影响<br>Impact on Results |
+| :--- | :--- | :--- | :--- | :--- |
+| **JC** | Jukes-Cantor | 0 | 假设所有碱基频率相等，所有类型的替代速率相等。是最简单的模型。<br>Assumes equal base frequencies and equal substitution rates. The simplest model. | 过于简单，会高估远缘序列间的距离，建树准确性通常较低，仅作为基线。<br>Oversimplified, overestimates distances between divergent sequences, usually low accuracy, used only as a baseline. |
+| **K2P** | Kimura 2-Parameter | 1 | 将替代分为**转换**和**颠换**，并假设转换速率高于颠换速率。考虑了线粒体DNA的进化特点。<br>Divides substitutions into **transitions** and **transversions**, assuming a higher transition rate. Accounts for mtDNA evolution characteristics. | 比JC模型更合理，但假设所有位点速率相同，且碱基频率相等。<br>More reasonable than JC, but assumes equal rates across sites and equal base frequencies. |
+| **HKY** | Hasegawa-Kishino-Yano | 4 | 在K2P的基础上，引入了**碱基频率**参数。<br>Extends K2P by incorporating **base frequency** parameters. | 更符合真实数据（如mtDNA通常富含A/T），能提供更准确的遗传距离估计。<br>Fits real data better (e.g., mtDNA is often AT-rich), provides more accurate genetic distance estimates. |
+| **GTR** | General Time Reversible | 8 | 最通用的可逆模型。为6种替代类型分别设置速率，并引入碱基频率参数。<br>The most general reversible model. Sets different rates for 6 substitution types and includes base frequency parameters. | 非常灵活，能更好地拟合复杂数据。但参数多，需要更多数据来估计，计算量大。<br>Very flexible, fits complex data better. But has many parameters, requires more data for estimation, computationally intensive. |
+| **GTR+I+Γ** | GTR with Invariant sites and Gamma | 10+ | 在GTR基础上增加了：<br>Extends GTR by adding:<br>- **+I**: 假设一定比例的位点是绝对保守的。<br>  Assumes a proportion of sites are completely invariant.<br>- **+Γ**: 假设可变位点的速率服从Gamma分布，以模拟位点间的速率异质性。<br>  Assumes rates at variable sites follow a Gamma distribution, modeling rate heterogeneity across sites. | **这是最复杂的常用模型之一，通常对真实数据拟合最好。** 它能有效处理一些位点进化快、一些位点进化慢的情况（mtDNA中存在这样的位点），极大提高建树准确性，特别是分支长度的估计。<br>**One of the most complex common models, often best fit for real data.** Effectively handles varying evolutionary rates across sites (present in mtDNA), greatly improves tree accuracy, especially branch lengths. |
 
-### 步骤 2: 多序列比对
-```bash
-# 使用MAFFT进行比对
-mafft --auto --thread 8 data/processed/cleaned_sequences.fasta > data/alignment/aligned_sequences.fasta
+### 模型选择的重要性 / Importance of Model Selection:
 
-# 使用TrimAl修剪比对结果
-trimal -in data/alignment/aligned_sequences.fasta -out data/alignment/trimmed_alignment.phy -gt 0.9 -cons 60
-```
+对于本项目64k条序列的数据，IQ-TREE很可能会选择**GTR+F+I+G4**（或类似）作为最佳模型。
+For the 64k sequence dataset in this project, IQ-TREE is likely to select **GTR+F+I+G4** (or similar) as the best model.
+- **F** 表示使用 empirically observed 碱基频率。
+  **F** denotes using empirically observed base frequencies.
 
-### 步骤 3: 系统发育分析
-```bash
-# 使用IQ-TREE进行完整的模型选择、建树和分支支持率评估
-iqtree -s data/alignment/trimmed_alignment.phy \
-  -m MFP \           # 自动进行ModelFinder模型选择
-  -B 1000 -bnni \    # 1000次UFBoostrap计算
-  -alrt 1000 \       # 1000次SH-aLRT检验
-  -T AUTO \          # 自动选择最佳线程数
-  --prefix results/trees/mtdna # 输出文件前缀
-```
+**选择错误模型的后果 / Consequences of Choosing the Wrong Model:**
+- **过于简单（如JC） / Too Simple (e.g., JC)**: 会低估近缘序列间的细微差异，高估远缘序列的距离，导致树拓扑结构错误（尤其是深层分支）和不可靠的分支长度。
+  Underestimates subtle differences between closely related sequences, overestimates distances between divergent sequences, leads to incorrect tree topology (especially deep branches) and unreliable branch lengths.
+- **过于复杂 / Too Complex**: 对于小数据集，可能会过拟合，但对于64k条序列的大数据集，复杂模型通常是必要且可靠的。
+  Might overfit small datasets, but for large datasets like 64k sequences, complex models are usually necessary and reliable.
 
-### 步骤 4: 结果可视化
-1.  将生成的 `results/trees/mtdna.contree` 文件导入 **FigTree**。
-2.  调整样式：显示节点支持率、调整分支颜色、缩放分支长度。
-3.  导出高质量图片（PDF/SVG/PNG）用于发表。
-4.  （可选）将树文件上传至 [iTOL](https://itol.embl.de) 进行更高级的在线注释。
+**结论 / Conclusion**: 使用ModelFinder等工具进行严格的模型选择，是确保系统发育推断准确性的基石。它让数据自己“告诉”我们它最适合的进化模型。
+Rigorous model selection using tools like ModelFinder is the cornerstone of accurate phylogenetic inference. It lets the data itself "tell" us its most suitable evolutionary model.
 
-##  预期结果与解读
+## 系统树解释 / Phylogenetic Tree Interpretation
 
--   **`mtdna.iqtree`**: 文本报告，包含：
-    -   最佳拟合模型（如 `TIM3+F+I+G4`）及其参数。
-    -   模型选择标准（BIC/AIC/AICc值）。
-    -   建树日志似然值（Log-likelihood）。
--   **`mtdna.contree`**: 包含分支支持率（UFBoot/SH-aLRT）的共识树文件。
-    -   **支持率解读:** `UFBoot ≥ 95%` 和 `SH-aLRT ≥ 80%` 通常认为分支具有强支持。
--   **系统发育树:** 可视化的树形图，用于阐释各单倍群（Haplogroup）间的进化关系。
+生成的系统树（见示例示意图，基于30条序列的子集）将呈现以下特征：
+The generated phylogenetic tree (see example schematic based on a 30-sequence subset) will exhibit the following features:
+- **根部 / Root**: 代表所有序列的最晚共同祖先（mtDNA Eve）。
+  Represents the Most Recent Common Ancestor (MRCA) of all sequences (mtDNA Eve).
+- **分支模式 / Branching Pattern**: 主要的分支对应于已知的mtDNA单倍群（如L0, L1, L2, L3, M, N, R, H, V, J等）。
+  Major branches correspond to known mtDNA haplogroups (e.g., L0, L1, L2, L3, M, N, R, H, V, J).
+- **分支长度 / Branch Lengths**: 与进化距离成正比，即累积的突变数量。分支越长，表明该谱系积累了越多突变。
+  Proportional to evolutionary distance, i.e., the number of accumulated mutations. Longer branches indicate more accumulated mutations in that lineage.
+- **支持率 / Support Values**: 分支节点上的数字（如100/100）代表自举支持率。高支持率（>95%）表明该分支非常可靠。
+  Numbers on branches (e.g., 100/100) represent bootstrap support values. High support (>95%) indicates a highly reliable branch.
 
+通过分析这棵包含全部序列的“宏树”，我们可以清晰地看到人类mtDNA的全球遗传多样性结构，验证已知的单倍群分类，并可能发现新的亚支系。
+By analyzing this "macro-tree" containing all sequences, we can clearly see the global genetic diversity structure of human mtDNA, validate known haplogroup classifications, and potentially discover new sub-clades.
 
-##  参考文献
+## 软件依赖 / Software Dependencies
 
-*   Nguyen, L.-T., et al. (2015). IQ-TREE: A fast and effective stochastic algorithm for estimating maximum-likelihood phylogenies. *Mol. Biol. Evol.*, 32(1), 268-274.
-*   Katoh, K., & Standley, D. M. (2013). MAFFT multiple sequence alignment software version 7: improvements in performance and usability. *Mol. Biol. Evol.*, 30(4), 772-780.
-*   Cock, P. J. A., et al. (2009). Biopython: freely available Python tools for computational molecular biology and bioinformatics. *Bioinformatics*, 25(11), 1422-1423.
+- **MAFFT** (v7.520+): 用于多序列比对。/ For multiple sequence alignment.
+- **IQ-TREE** (v2.2.0+): 用于模型选择、系统发育树构建和评估。/ For model selection, phylogenetic tree construction, and evaluation.
+- **可选可视化工具 / Optional Visualization Tools:**
+    - FigTree
+    - iTOL (Interactive Tree Of Life)
+    - Dendroscope
 
 ---
+**备注 / Note**: 由于原始数据量巨大（64,028条序列），实际计算过程可能需要在高性能计算集群上运行数小时甚至数天。文档中提供的示意图仅为基于小子集的示例，以便于快速可视化和理解。
+Due to the enormous size of the raw data (64,028 sequences), the actual computation may require hours or even days to run on a high-performance computing cluster. The schematic diagram provided in the documentation is only an example based on a small subset for quick visualization and understanding.
 
-**⭐ 如果这个项目对您有帮助，请给它点个星！**
-
-最后修改时间：2025-8-21
+**最后更新时间： / Last edit time**：2025-8-24
