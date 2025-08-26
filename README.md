@@ -82,24 +82,34 @@ IQ-TREE's model comparison function (e.g., `ModelFinder`) is a critical step for
 | **JC** | Jukes-Cantor | 0 | 假设所有碱基频率相等，所有类型的替代速率相等。是最简单的模型。<br>Assumes equal base frequencies and equal substitution rates. The simplest model. | 过于简单，会高估远缘序列间的距离，建树准确性通常较低，仅作为基线。<br>Oversimplified, overestimates distances between divergent sequences, usually low accuracy, used only as a baseline. |
 | **K2P** | Kimura 2-Parameter | 1 | 将替代分为**转换**和**颠换**，并假设转换速率高于颠换速率。考虑了线粒体DNA的进化特点。<br>Divides substitutions into **transitions** and **transversions**, assuming a higher transition rate. Accounts for mtDNA evolution characteristics. | 比JC模型更合理，但假设所有位点速率相同，且碱基频率相等。<br>More reasonable than JC, but assumes equal rates across sites and equal base frequencies. |
 | **HKY** | Hasegawa-Kishino-Yano | 4 | 在K2P的基础上，引入了**碱基频率**参数。<br>Extends K2P by incorporating **base frequency** parameters. | 更符合真实数据（如mtDNA通常富含A/T），能提供更准确的遗传距离估计。<br>Fits real data better (e.g., mtDNA is often AT-rich), provides more accurate genetic distance estimates. |
+| **TN** | Tamura-Nei | 5 | 在HKY基础上进一步区分转换类型（嘌呤间和嘧啶间）和颠换类型，更精细地描述替代过程。<br>Extends HKY by further distinguishing transition types (purine-purine and pyrimidine-pyrimidine) and transversion types, providing a more refined description of the substitution process. | 比HKY更灵活，能更好地区分不同类型的转换事件，适合描述复杂进化模式。<br>More flexible than HKY, better distinguishes different types of transition events, suitable for describing complex evolutionary patterns. |
 | **GTR** | General Time Reversible | 8 | 最通用的可逆模型。为6种替代类型分别设置速率，并引入碱基频率参数。<br>The most general reversible model. Sets different rates for 6 substitution types and includes base frequency parameters. | 非常灵活，能更好地拟合复杂数据。但参数多，需要更多数据来估计，计算量大。<br>Very flexible, fits complex data better. But has many parameters, requires more data for estimation, computationally intensive. |
-| **GTR+I+Γ** | GTR with Invariant sites and Gamma | 10+ | 在GTR基础上增加了：<br>Extends GTR by adding:<br>- **+I**: 假设一定比例的位点是绝对保守的。<br>  Assumes a proportion of sites are completely invariant.<br>- **+Γ**: 假设可变位点的速率服从Gamma分布，以模拟位点间的速率异质性。<br>  Assumes rates at variable sites follow a Gamma distribution, modeling rate heterogeneity across sites. | **这是最复杂的常用模型之一，通常对真实数据拟合最好。** 它能有效处理一些位点进化快、一些位点进化慢的情况（mtDNA中存在这样的位点），极大提高建树准确性，特别是分支长度的估计。<br>**One of the most complex common models, often best fit for real data.** Effectively handles varying evolutionary rates across sites (present in mtDNA), greatly improves tree accuracy, especially branch lengths. |
 
 ### 模型选择的重要性 / Importance of Model Selection:
 
-对于本项目64k条序列的数据，IQ-TREE很可能会选择**GTR+F+I+G4**（或类似）作为最佳模型。
-For the 64k sequence dataset in this project, IQ-TREE is likely to select **GTR+F+I+G4** (or similar) as the best model.
-- **F** 表示使用 empirically observed 碱基频率。
-  **F** denotes using empirically observed base frequencies.
+**基于30条序列子集的实际分析结果 / Based on actual analysis results of the 30-sequence subset:**
+通过ModelFinder基于BIC准则选择，最适合30条人类线粒体基因组序列数据的模型是 **TN+F+I**。
+According to the ModelFinder selection based on BIC criterion, the best-fit model for the 30 human mitochondrial genome sequences is **TN+F+I**.
+
+- **TN**: Tamura-Nei替代模型，考虑了不同碱基间替换的速率差异。
+  TN: Tamura-Nei substitution model, considering rate differences between different base substitutions.
+- **F**: 使用 empirically observed 碱基频率（A=0.309, C=0.313, G=0.131, T=0.247）。
+  F: Denotes using empirically observed base frequencies (A=0.309, C=0.313, G=0.131, T=0.247).
+- **I**: 包含不变位点（Proportion of invariable sites: 0.933），反映了序列中高度保守的区域。
+  I: Includes invariant sites (Proportion of invariable sites: 0.933), reflecting highly conserved regions in the sequences.
+
+**选择该模型的原因 / Reason for selecting this model:**
+数据分析显示，19956个位点中有19661个（约98.5%）是恒定不变的，仅有极少的变异位点。对于这样的高保守性数据，TN+F+I模型在模型复杂度和对数据的解释力之间取得了最佳平衡（BIC最低），避免了过度参数化。
+Data analysis showed that 19,661 out of 19,956 sites (approximately 98.5%) were constant, with only very few variable sites. For such highly conserved data, the TN+F+I model achieved the best balance between model complexity and explanatory power (lowest BIC), avoiding over-parameterization.
 
 **选择错误模型的后果 / Consequences of Choosing the Wrong Model:**
 - **过于简单（如JC） / Too Simple (e.g., JC)**: 会低估近缘序列间的细微差异，高估远缘序列的距离，导致树拓扑结构错误（尤其是深层分支）和不可靠的分支长度。
   Underestimates subtle differences between closely related sequences, overestimates distances between divergent sequences, leads to incorrect tree topology (especially deep branches) and unreliable branch lengths.
-- **过于复杂 / Too Complex**: 对于小数据集，可能会过拟合，但对于64k条序列的大数据集，复杂模型通常是必要且可靠的。
-  Might overfit small datasets, but for large datasets like 64k sequences, complex models are usually necessary and reliable.
+- **过于复杂 / Too Complex**: 对于高保守性数据集，复杂模型（如GTR+F+I+G4）可能会导致过拟合，降低模型的泛化能力。
+  For highly conserved datasets, complex models (e.g., GTR+F+I+G4) may lead to overfitting and reduce the model's generalization ability.
 
-**结论 / Conclusion**: 使用ModelFinder等工具进行严格的模型选择，是确保系统发育推断准确性的基石。它让数据自己“告诉”我们它最适合的进化模型。
-Rigorous model selection using tools like ModelFinder is the cornerstone of accurate phylogenetic inference. It lets the data itself "tell" us its most suitable evolutionary model.
+**结论 / Conclusion**: 使用ModelFinder等工具进行严格的模型选择，是确保系统发育推断准确性的基石。它让数据自己"告诉"我们它最适合的进化模型。对于高保守性的人类线粒体基因组数据，相对简单但适当的TN+F+I模型可能是最优选择。
+Rigorous model selection using tools like ModelFinder is the cornerstone of accurate phylogenetic inference. It lets the data itself "tell" us its most suitable evolutionary model. For highly conserved human mitochondrial genome data, a relatively simple but appropriate model like TN+F+I may be the optimal choice.
 
 ## 系统树解释 / Phylogenetic Tree Interpretation
 
@@ -107,27 +117,44 @@ Rigorous model selection using tools like ModelFinder is the cornerstone of accu
 The generated phylogenetic tree (see example schematic based on a 30-sequence subset) will exhibit the following features:
 - **根部 / Root**: 代表所有序列的最晚共同祖先（mtDNA Eve）。
   Represents the Most Recent Common Ancestor (MRCA) of all sequences (mtDNA Eve).
-- **分支模式 / Branching Pattern**: 主要的分支对应于已知的mtDNA单倍群（如L0, L1, L2, L3, M, N, R, H, V, J等）。
-  Major branches correspond to known mtDNA haplogroups (e.g., L0, L1, L2, L3, M, N, R, H, V, J).
+- **分支模式 / Branching Pattern**: 主要的分支对应于已知的mtDNA单倍群（如L, M, N, H等）。
+  Major branches correspond to known mtDNA haplogroups (e.g., L, M, N, H).
 - **分支长度 / Branch Lengths**: 与进化距离成正比，即累积的突变数量。分支越长，表明该谱系积累了越多突变。
   Proportional to evolutionary distance, i.e., the number of accumulated mutations. Longer branches indicate more accumulated mutations in that lineage.
-- **支持率 / Support Values**: 分支节点上的数字（如100/100）代表自举支持率。高支持率（>95%）表明该分支非常可靠。
-  Numbers on branches (e.g., 100/100) represent bootstrap support values. High support (>95%) indicates a highly reliable branch.
+- **支持率 / Support Values**: 分支节点上的数字代表自举支持率。高支持率（>95%）表明该分支非常可靠。
+  Numbers on branches represent bootstrap support values. High support (>95%) indicates a highly reliable branch.
 
-通过分析这棵包含全部序列的“宏树”，我们可以清晰地看到人类mtDNA的全球遗传多样性结构，验证已知的单倍群分类，并可能发现新的亚支系。
+通过分析这棵包含全部序列的"宏树"，我们可以清晰地看到人类mtDNA的全球遗传多样性结构，验证已知的单倍群分类，并可能发现新的亚支系。
 By analyzing this "macro-tree" containing all sequences, we can clearly see the global genetic diversity structure of human mtDNA, validate known haplogroup classifications, and potentially discover new sub-clades.
 
 ## 软件依赖 / Software Dependencies
 
 - **MAFFT** (v7.520+): 用于多序列比对。/ For multiple sequence alignment.
-- **IQ-TREE** (v2.2.0+): 用于模型选择、系统发育树构建和评估。/ For model selection, phylogenetic tree construction, and evaluation.
+- **IQ-TREE** (v3.0.1+): 用于模型选择、系统发育树构建和评估。/ For model selection, phylogenetic tree construction, and evaluation.
 - **可选可视化工具 / Optional Visualization Tools:**
     - FigTree
     - iTOL (Interactive Tree Of Life)
     - Dendroscope
 
+## 基础命令示例 / Basic Command Examples
+
+```bash
+# 1. 序列比对 / Sequence Alignment
+mafft --auto --thread 40 input_sequences.fasta > all.aln.uniqueseq.aln
+
+# 2. 使用IQ-TREE进行模型选择、自举评估并建树
+iqtree3 -s all.aln.uniqueseq.aln -m MFP -B 1000 -alrt 1000 -T AUTO --prefix all.aln.uniqueseq.aln
+# 参数解释 / Parameter Explanation:
+# -s： 输入比对文件 / Input alignment file
+# -m MFP： 执行ModelFinder找到最佳模型（MFP），并用该模型建树 / Execute ModelFinder to find the best model (MFP) and build the tree with it
+# -B 1000： 执行1000次自举法重复以评估分支支持率 / Perform 1000 bootstrap replicates to assess branch support
+# -alrt 1000： 执行1000次SH-aLRT检验以评估分支支持率 / Perform 1000 SH-aLRT tests to assess branch support
+# -T AUTO： 使用所有可用的CPU线程 / Use all available CPU threads
+# --prefix： 设置输出文件前缀 / Set output file prefix
+```
+
 ---
 **备注 / Note**: 由于原始数据量巨大（64,028条序列），实际计算过程可能需要在高性能计算集群上运行数小时甚至数天。文档中提供的示意图仅为基于小子集的示例，以便于快速可视化和理解。
 Due to the enormous size of the raw data (64,028 sequences), the actual computation may require hours or even days to run on a high-performance computing cluster. The schematic diagram provided in the documentation is only an example based on a small subset for quick visualization and understanding.
 
-**最后更新时间： / Last edit time**：2025-8-24
+**最后更新时间： / Last edit time**：2025-8-26
